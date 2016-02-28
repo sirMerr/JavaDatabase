@@ -4,6 +4,10 @@ import entities.Book;
 import entities.Patron;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Scanner;
 
 public class LibraryDatabase {
 
@@ -49,7 +53,7 @@ public class LibraryDatabase {
 		String password = this.password;
 
 		conn = DriverManager.getConnection("jdbc:mysql://" + this.serverName
-				+ ":" + this.portNumber + "/", user, password);
+				+ ":" + this.portNumber + "/" + user, user, password);
 
 		return conn;
 	}
@@ -63,27 +67,37 @@ public class LibraryDatabase {
 	 * @return Book corresponding with isbn. returns null if nonexistent
 	 */
 	public Book getBook(int isbn) throws SQLException {
+
 		Statement stmt = null;
 		Book book = null;
+		String title = "";
+		Date pubdate = null;
+		int genre_id = -1;
+		String genre_name = "";
+		List<String> authors = new ArrayList<String>();
 
 		// open connection
 		stmt = conn.createStatement();
 
-		String query = "SELECT book_title,publication_date,genre,author_id,firstname,lastname FROM book "
+		String query = "SELECT book_title,publication_date,genre_name, genre_id ,firstname,lastname FROM book "
 				+ "INNER JOIN book_authors ON isbn = book "
-				+ "INNER JOIN author ON author = author_id";
+				+ "INNER JOIN author ON author = author_id "
+				+ "INNER JOIN genre ON genre = genre_id "
+				+ "WHERE isbn = "
+				+ isbn;
 		ResultSet rs = stmt.executeQuery(query);
 
 		while (rs.next()) {
-			String title = rs.getString("book_title");
-			Date pubdate = rs.getDate("publication_date");
-			String genre = rs.getString("genre");
-			String firstname = rs.getString("firstname");
-			String lastname = rs.getString("lastname");
-			int author_id = rs.getInt("author_id");
-			
-			book = new Book(isbn, title, pubdate, genre,firstname,lastname,author_id);
+			title = rs.getString("book_title");
+			pubdate = rs.getDate("publication_date");
+			genre_id = rs.getInt("genre_id");
+			genre_name = rs.getString("genre_name");
+			authors.add(rs.getString("firstname"));
+			authors.add(rs.getString("lastname"));
 		}
+
+		book = new Book(isbn, title, pubdate, genre_name, genre_id, authors);
+
 		// close connection
 		if (stmt != null) {
 			stmt.close();
@@ -99,7 +113,44 @@ public class LibraryDatabase {
 	 * names, genre and publication date should all be formatted in a readable
 	 * fashion and displayed to the screen.
 	 */
-	public void bookReport() {
+	public void bookReport() throws SQLException {
+		Statement stmt = null;
+		int isbn = -1;
+		String title = "";
+		Date pubdate = null;
+		int genre_id = -1;
+		String genre_name = "";
+		String firstname = "";
+		String lastname = "";
+
+		// open connection
+		stmt = conn.createStatement();
+
+		String query = "SELECT isbn,book_title,publication_date,genre_name, genre_id ,firstname,lastname FROM book "
+				+ "INNER JOIN book_authors ON isbn = book "
+				+ "INNER JOIN author ON author = author_id "
+				+ "INNER JOIN genre ON genre = genre_id ";
+		ResultSet rs = stmt.executeQuery(query);
+
+		while (rs.next()) {
+			isbn = rs.getInt("isbn");
+			title = rs.getString("book_title");
+			pubdate = rs.getDate("publication_date");
+			genre_id = rs.getInt("genre_id");
+			genre_name = rs.getString("genre_name");
+			firstname = rs.getString("firstname");
+			lastname = rs.getString("lastname");
+
+			System.out
+					.printf("isbn: %d | Title: %s | Publication Date: %s | genre_id: %d | genre_name %s | Author Name: %s %s\n",
+							isbn, title, pubdate, genre_id, genre_name,
+							firstname, lastname);
+		}
+
+		// close connection
+		if (stmt != null) {
+			stmt.close();
+		}
 
 	}
 
@@ -108,8 +159,33 @@ public class LibraryDatabase {
 	 * a new patron record, and add that information to the database. It should
 	 * prompt for a first name, a last name, and optionally an email address.
 	 */
-	public void newPatron() {
+	public void newPatron() throws SQLException{
+		Scanner scan = new Scanner(System.in);
+		System.out
+				.print("==Starting process for adding a new patron record==\nFirst Name:  ");
+		String firstname = scan.nextLine();
+		System.out.print("Last name:  ");
+		String lastname = scan.nextLine();
+		System.out.print("Email(optional):  ");
+		String email = scan.nextLine();
 
+		scan.close();
+		
+		Statement stmt = null;
+		stmt = conn.createStatement();
+
+		String query = "SELECT MAX(patron_id) FROM patron";
+		ResultSet rs = stmt.executeQuery(query);
+		
+		while (rs.next()) {
+			int patron_id = rs.getInt("patron_id") + 1;
+		}
+		
+		if (stmt != null) {
+			stmt.close();
+		}
+		
+		
 	}
 
 	/**
@@ -193,4 +269,5 @@ public class LibraryDatabase {
 	public void recommendBook(Patron p) {
 
 	}
+
 }

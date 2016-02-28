@@ -1,5 +1,7 @@
 package entities;
 
+import java.util.Optional;
+
 
 public class Patron {
 	// global variables
@@ -17,11 +19,10 @@ public class Patron {
 	 * @param lastname
 	 * @param email
 	 */
-	public Patron(int id, String firstname, String lastname, double fees, String email) {
+	public Patron(int id, String firstname, String lastname, String email) {
 		this.id = id;
 		this.firstname = firstname;
 		this.lastname = lastname;
-		this.fees = fees;
 		this.email = email;
 	}
 }
