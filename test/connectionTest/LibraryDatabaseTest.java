@@ -6,6 +6,7 @@ package connectionTest;
 import java.sql.SQLException;
 
 import connection.LibraryDatabase;
+import entities.Patron;
 
 /**
  * @author Tiffany
@@ -21,7 +22,9 @@ public class LibraryDatabaseTest {
 			LibraryDatabase database = new LibraryDatabase();
 			//System.out.println(database.getBook(12348).toString());
 			//database.bookReport();
-			database.newPatron();
+			//database.newPatron();
+			//database.renewBooks(p);
+
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

@@ -4,6 +4,9 @@ import entities.Book;
 import entities.Patron;
 
 import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,7 +37,7 @@ public class LibraryDatabase {
 	 * @param portNumber
 	 */
 	public LibraryDatabase(String userName, String password, String serverName,
-			int portNumber) throws SQLException {
+			int portNumber) {
 		this.userName = userName;
 		this.password = password;
 		this.serverName = serverName;
@@ -46,14 +49,21 @@ public class LibraryDatabase {
 	/**
 	 * Helper method that acquires a connection to the server.
 	 */
-	public Connection getConnection() throws SQLException {
+	public Connection getConnection() {
 
 		Connection conn = null;
 		String user = this.userName;
 		String password = this.password;
 
-		conn = DriverManager.getConnection("jdbc:mysql://" + this.serverName
-				+ ":" + this.portNumber + "/" + user, user, password);
+		try {
+			conn = DriverManager.getConnection("jdbc:mysql://"
+					+ this.serverName + ":" + this.portNumber + "/" + user,
+					user, password);
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error connecting to database");
+		}
 
 		return conn;
 	}
@@ -66,41 +76,46 @@ public class LibraryDatabase {
 	 * 
 	 * @return Book corresponding with isbn. returns null if nonexistent
 	 */
-	public Book getBook(int isbn) throws SQLException {
+	public Book getBook(int isbn) {
 
 		Statement stmt = null;
 		Book book = null;
 		String title = "";
 		Date pubdate = null;
-		int genre_id = -1;
 		String genre_name = "";
 		List<String> authors = new ArrayList<String>();
 
 		// open connection
-		stmt = conn.createStatement();
+		try {
+			stmt = conn.createStatement();
 
-		String query = "SELECT book_title,publication_date,genre_name, genre_id ,firstname,lastname FROM book "
-				+ "INNER JOIN book_authors ON isbn = book "
-				+ "INNER JOIN author ON author = author_id "
-				+ "INNER JOIN genre ON genre = genre_id "
-				+ "WHERE isbn = "
-				+ isbn;
-		ResultSet rs = stmt.executeQuery(query);
+			String query = "SELECT book_title,publication_date,genre_name,firstname,lastname FROM book "
+					+ "INNER JOIN book_authors ON isbn = book "
+					+ "INNER JOIN author ON author = author_id "
+					+ "INNER JOIN genre ON genre = genre_id "
+					+ "WHERE isbn = "
+					+ isbn;
+			ResultSet rs = stmt.executeQuery(query);
 
-		while (rs.next()) {
-			title = rs.getString("book_title");
-			pubdate = rs.getDate("publication_date");
-			genre_id = rs.getInt("genre_id");
-			genre_name = rs.getString("genre_name");
-			authors.add(rs.getString("firstname"));
-			authors.add(rs.getString("lastname"));
-		}
+			while (rs.next()) {
+				title = rs.getString("book_title");
+				pubdate = rs.getDate("publication_date");
+				genre_name = rs.getString("genre_name");
+				authors.add(rs.getString("firstname"));
+				authors.add(rs.getString("lastname"));
+			}
 
-		book = new Book(isbn, title, pubdate, genre_name, genre_id, authors);
+			book = new Book(isbn, title, pubdate, genre_name, authors);
 
-		// close connection
-		if (stmt != null) {
-			stmt.close();
+			// close connection
+			if (stmt != null) {
+				stmt.close();
+			}
+			return book;
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error getting book");
 		}
 
 		return book;
@@ -113,7 +128,7 @@ public class LibraryDatabase {
 	 * names, genre and publication date should all be formatted in a readable
 	 * fashion and displayed to the screen.
 	 */
-	public void bookReport() throws SQLException {
+	public void bookReport() {
 		Statement stmt = null;
 		int isbn = -1;
 		String title = "";
@@ -124,32 +139,38 @@ public class LibraryDatabase {
 		String lastname = "";
 
 		// open connection
-		stmt = conn.createStatement();
+		try {
+			stmt = conn.createStatement();
 
-		String query = "SELECT isbn,book_title,publication_date,genre_name, genre_id ,firstname,lastname FROM book "
-				+ "INNER JOIN book_authors ON isbn = book "
-				+ "INNER JOIN author ON author = author_id "
-				+ "INNER JOIN genre ON genre = genre_id ";
-		ResultSet rs = stmt.executeQuery(query);
+			String query = "SELECT isbn,book_title,publication_date,genre_name, genre_id ,firstname,lastname FROM book "
+					+ "INNER JOIN book_authors ON isbn = book "
+					+ "INNER JOIN author ON author = author_id "
+					+ "INNER JOIN genre ON genre = genre_id ";
+			ResultSet rs = stmt.executeQuery(query);
 
-		while (rs.next()) {
-			isbn = rs.getInt("isbn");
-			title = rs.getString("book_title");
-			pubdate = rs.getDate("publication_date");
-			genre_id = rs.getInt("genre_id");
-			genre_name = rs.getString("genre_name");
-			firstname = rs.getString("firstname");
-			lastname = rs.getString("lastname");
+			while (rs.next()) {
+				isbn = rs.getInt("isbn");
+				title = rs.getString("book_title");
+				pubdate = rs.getDate("publication_date");
+				genre_id = rs.getInt("genre_id");
+				genre_name = rs.getString("genre_name");
+				firstname = rs.getString("firstname");
+				lastname = rs.getString("lastname");
 
-			System.out
-					.printf("isbn: %d | Title: %s | Publication Date: %s | genre_id: %d | genre_name %s | Author Name: %s %s\n",
-							isbn, title, pubdate, genre_id, genre_name,
-							firstname, lastname);
-		}
+				System.out
+						.printf("isbn: %d | Title: %s | Publication Date: %s | genre_id: %d | genre_name %s | Author Name: %s %s\n",
+								isbn, title, pubdate, genre_id, genre_name,
+								firstname, lastname);
+			}
 
-		// close connection
-		if (stmt != null) {
-			stmt.close();
+			// close connection
+			if (stmt != null) {
+				stmt.close();
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error displaying book report");
 		}
 
 	}
@@ -159,8 +180,11 @@ public class LibraryDatabase {
 	 * a new patron record, and add that information to the database. It should
 	 * prompt for a first name, a last name, and optionally an email address.
 	 */
-	public void newPatron() throws SQLException{
+	public void newPatron() {
+		int patron_id = -1;
 		Scanner scan = new Scanner(System.in);
+
+		// Get patron info
 		System.out
 				.print("==Starting process for adding a new patron record==\nFirst Name:  ");
 		String firstname = scan.nextLine();
@@ -170,22 +194,68 @@ public class LibraryDatabase {
 		String email = scan.nextLine();
 
 		scan.close();
-		
-		Statement stmt = null;
-		stmt = conn.createStatement();
 
-		String query = "SELECT MAX(patron_id) FROM patron";
-		ResultSet rs = stmt.executeQuery(query);
-		
-		while (rs.next()) {
-			int patron_id = rs.getInt("patron_id") + 1;
+		// Open connection
+		Statement stmt = null;
+		try {
+			stmt = conn.createStatement();
+
+			// Get next patron_id
+			String query = "SELECT MAX(patron_id) FROM patron";
+			ResultSet rs = stmt.executeQuery(query);
+
+			while (rs.next()) {
+				patron_id = rs.getInt("MAX(patron_id)") + 1;
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error setting patron_id");
 		}
-		
-		if (stmt != null) {
-			stmt.close();
+
+		// Check if patron already exists
+		String query = "SELECT firstname, lastname, email " + "FROM patron "
+				+ "WHERE firstname=\"" + firstname + "\" AND lastname=\""
+				+ lastname + "\";";
+		try {
+			ResultSet rs = stmt.executeQuery(query);
+
+			if (rs.next()) {
+				System.out.println("Patron already exists");
+
+				// Close connection
+				if (stmt != null) {
+					stmt.close();
+				}
+				return;
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error validating patron name");
 		}
-		
-		
+		// Patron does not exist
+		query = "INSERT INTO patron VALUES (?, ?, ?, 0, ?);";
+		try {
+			PreparedStatement addPatron = conn.prepareStatement(query);
+			addPatron.setInt(1, patron_id);
+			addPatron.setString(2, firstname);
+			addPatron.setString(3, lastname);
+			addPatron.setString(4, email);
+			addPatron.execute();
+
+			// Close connection
+			if (stmt != null) {
+				stmt.close();
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error adding patron");
+			return;
+		}
+
 	}
 
 	/**
@@ -195,7 +265,128 @@ public class LibraryDatabase {
 	 * publication date.
 	 */
 	public void newBook() {
+		Statement stmt = null;
+		Scanner input = new Scanner(System.in);
+		String title = null, pubDate = null, isbn = null, genre = null;
+		List<String> firstNames = new ArrayList<String>();
+		List<String> lastNames = new ArrayList<String>();
+		boolean valid = false;
 
+		System.out.println("==Start of New Book Creation==:");
+		while (!valid) {
+			System.out.println("Enter a book title: ");
+			title = input.nextLine();
+			if (title.length() >= 255) {
+				System.out.println("Invalid>> Book title is too long");
+				continue;
+			}
+
+			// Read isbn
+			System.out.println("Enter an isbn (must be only digits): ");
+			isbn = input.nextLine();
+			if (isbn.length() >= 6 || !isbn.matches("[0-9]+")) {
+				System.out
+						.println("Invalid>> isbn must be between 00001 and 99999");
+				continue;
+			}
+
+			// Read genre
+			System.out.println("Enter a genre: ");
+			genre = input.nextLine();
+			if (genre.length() >= 255 || !genre.matches(".*[0-9].*")) {
+				System.out
+						.println("Invalid>> Genre name is too long or contains nubmers");
+				continue;
+			}
+
+			// Read publication date
+			System.out
+					.println("Enter a publication date (FORMAT = yyyy-mm-dd): ");
+			pubDate = input.nextLine();
+			if (!validateDate(pubDate)) {
+				System.out.println("Invalid>> Entered date is not valid");
+				continue;
+			}
+
+			// Read first name
+			System.out.println("Enter a first name: ");
+			firstNames.add(input.nextLine());
+			if (firstNames.get(0).length() >= 255
+					|| firstNames.get(0).matches(".*[0-9].*")) {
+				System.out
+						.println("Invalid>> First name is too long or contains numbers");
+				continue;
+			}
+
+			// Read last name
+			System.out.println("Enter a last name: ");
+			lastNames.add(input.nextLine());
+			if (lastNames.get(0).length() >= 255
+					|| lastNames.get(0).matches(".*[0-9].*")) {
+				System.out
+						.println("Invalid>> Last name is too long or contains numbers");
+				continue;
+			}
+			valid = true;
+		} // end loop
+
+		try {
+			conn = getConnection();
+			stmt = conn.createStatement();
+			int id = 0;
+			ResultSet set;
+
+			// Check for repeating Genre
+			set = stmt
+					.executeQuery("SELECT genre_id FROM genre WHERE genre_name = '"
+							+ genre + "';");
+			if (!set.next()) {
+				// If it does not already exist add the new genre
+				stmt.executeQuery("INSERT INTO genre (genre_name) VALUES ('"
+						+ genre + "');");
+				System.out.println("New Genre Added");
+				set = stmt
+						.executeQuery("SELECT genre_id FROM genre WHERE genre_name = '"
+								+ genre + "';");
+			}
+			id = set.getInt("genre_id");
+
+			// Check for repeating Book
+			set = stmt.executeQuery("SELECT isbn FROM book WHERE isbn = "
+					+ isbn);
+			if (!set.next()) {
+				// Book does not exist, therefore add the book
+				stmt.executeQuery("INSERT INTO book VALUES (" + isbn + ",'"
+						+ title + "','" + pubDate + "'," + id + ");");
+				// Check if the author exists
+				for (int i = 0; i < firstNames.size(); i++) {
+					set = stmt.executeQuery("SELECT author_id FROM author "
+							+ "WHERE firstname = '" + firstNames.get(i)
+							+ "' AND lastname = '" + lastNames.get(i) + "';");
+					if (!set.next()) {
+						stmt.executeQuery("INSERT INTO author (firstname, lastname) VALUES ('"
+								+ firstNames.get(i)
+								+ "','"
+								+ lastNames.get(i)
+								+ "');");
+						System.out.println("New Author Added");
+					}
+				}
+			} else
+				System.out.println("Book already exists in database");
+
+		} catch (SQLException ex) {
+			System.out.println("Connection failure: " + ex.getMessage());
+		} finally {
+			if (stmt != null) {
+				try {
+					stmt.close();
+				} catch (SQLException ex) {
+					System.out.println("Statement Close Failure: "
+							+ ex.getMessage());
+				}
+			}
+		}
 	}
 
 	/**
@@ -223,8 +414,46 @@ public class LibraryDatabase {
 	 *            New Book to enter in table
 	 * @param p
 	 *            New Patron to enter in table
+	 * 
 	 */
 	public void loan(Book b, Patron p) {
+		int loanId = -1;
+		try {
+			Statement stmt = conn.createStatement();
+			String query = "SELECT COUNT(loan_id) FROM book_loan;";
+			ResultSet rs = stmt.executeQuery(query);
+
+			rs.next();
+			loanId = rs.getInt(1) + 1;
+			// close connection
+			if (stmt != null) {
+				stmt.close();
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error getting loans");
+		}
+
+		Date date = Date.valueOf(LocalDate.now().plusWeeks(2));
+
+		try {
+			PreparedStatement stmt = conn
+					.prepareStatement("INSERT INTO book_loan VALUES (?, ?, ?, ?, 0);");
+			stmt.setInt(1, loanId);
+			stmt.setInt(2, p.getId());
+			stmt.setInt(3, b.getIsbn());
+			stmt.setDate(4, date);
+			stmt.execute();
+			// close connection
+			if (stmt != null) {
+				stmt.close();
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error executing statement");
+		}
 
 	}
 
@@ -240,6 +469,46 @@ public class LibraryDatabase {
 	 */
 	public void returnBook(Book b) {
 
+		try {
+			PreparedStatement stmt = conn
+					.prepareStatement("UPDATE book_loan SET returned=1 "
+							+ "WHERE book=? AND returned=0;");
+			stmt.setInt(1, b.getIsbn());
+			stmt.execute();
+			System.out.println("Successfully returned book");
+			// close connection
+			if (stmt != null) {
+				stmt.close();
+			}
+		} catch (SQLException e) {
+			System.out.println("Error returning book");
+			return;
+		}
+
+		int fees = checkFee(b);
+		int id = 0;
+		ResultSet rs = null;
+
+		try {
+			PreparedStatement stmt = conn
+					.prepareStatement("SELECT * FROM book_loan WHERE book=?;");
+			stmt.setInt(1, b.getIsbn());
+			rs = stmt.executeQuery();
+			rs.next();
+			id = rs.getInt(1);
+			// close connection
+			if (stmt != null) {
+				stmt.close();
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error fetching the Patron ID");
+			return;
+		}
+
+		Patron p = new Patron(id, null, null, null);
+		setFee(p, fees);
 	}
 
 	/**
@@ -253,7 +522,46 @@ public class LibraryDatabase {
 	 *            Patron whose books will be renewed
 	 */
 	public void renewBooks(Patron p) {
+		ResultSet rs = null;
+		PreparedStatement stmt = null;
+		try {
+			stmt = conn.prepareStatement("SELECT * " + "FROM book_loan "
+					+ "WHERE returned=0 AND patron_id=?;");
 
+			stmt.setInt(1, p.getId());
+			rs = stmt.executeQuery();
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error occurred executing stmt");
+		}
+
+		try {
+			if (rs == null || !rs.next()) {
+				return;
+			}
+
+			rs.beforeFirst();
+			while (rs.next()) {
+				Book book = null;
+				book = new Book(rs.getInt(3), null, null, null, null);
+
+				int fees = checkFee(book);
+				setFee(p, fees);
+				rs.updateDate(4, Date.valueOf(LocalDate.now().plusWeeks(2)));
+				rs.updateRow();
+			}
+			// close connection
+			if (stmt != null) {
+				stmt.close();
+			}
+
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error renewing the books");
+			return;
+		}
 	}
 
 	/**
@@ -265,9 +573,142 @@ public class LibraryDatabase {
 	 * 
 	 * @param p
 	 *            Patron whom we will be recommending books to
+	 * @return list of recommended books
 	 */
-	public void recommendBook(Patron p) {
+	public List<Book> recommendBook(Patron p) {
+		List<Book> recommended = new ArrayList<Book>();
+		ResultSet rs = null;
+		Statement stmt = null;
+		int isbn;
 
+		try {
+			stmt = conn.createStatement();
+			rs = stmt
+					.executeQuery("SELECT DISTINCT isbn, book_title, publication_date, genre_name, returned "
+							+ "FROM book "
+							+ "INNER JOIN genre ON genre=genre_id "
+							+ "LEFT OUTER JOIN book_loan ON isbn=book "
+							+ "WHERE genre = "
+							+ "(SELECT genre FROM book "
+							+ "INNER JOIN book_loan ON isbn=book "
+							+ "INNER JOIN patron ON patron.patron_id=book_loan.patron_id "
+							+ "WHERE patron.patron_id ="
+							+ p.getId()
+							+ "GROUP BY genre "
+							+ "ORDER BY COUNT(genre) DESC) "
+							+ "HAVING returned IN (1) OR returned IS NULL;");
+
+			while (rs.next()) {
+				isbn = rs.getInt("isbn");
+				recommended.add(getBook(isbn));
+			}
+			// close connection
+			if (stmt != null) {
+				stmt.close();
+			}
+
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error fetching the patrons books");
+		}
+
+		return recommended;
+
+	}
+
+	/**
+	 * Checks if the date is valid
+	 * 
+	 * @param String
+	 *            date
+	 * @return true if date is valid false if date is not
+	 */
+	public boolean validateDate(String text) {
+		if (text == null || !text.matches("\\d{4}-[01]\\d-[0-3]\\d"))
+			return false;
+		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
+		df.setLenient(false);
+		try {
+			df.parse(text);
+			return true;
+		} catch (ParseException ex) {
+			return false;
+		}
+	}
+
+	/**
+	 * Returns a book's fee
+	 * 
+	 * @param book
+	 * @return int fee
+	 */
+	private int checkFee(Book book) {
+		int fees = 0;
+		LocalDate dateDue = null;
+		LocalDate now = LocalDate.now();
+		int diff = 0;
+		int yearDiff = now.getYear(), dayDiff = now.getDayOfYear();
+
+		try {
+			PreparedStatement stmt = conn
+					.prepareStatement("SELECT due_date FROM book_loan WHERE book=?;");
+			ResultSet rs = null;
+			stmt.setInt(1, book.getIsbn());
+			rs = stmt.executeQuery();
+			rs.next();
+			dateDue = rs.getDate(1).toLocalDate();
+
+			// close connection
+			if (stmt != null) {
+				stmt.close();
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error fetching the due date");
+		}
+
+		if (dateDue.isBefore(now)) {
+			yearDiff -= dateDue.getYear();
+			dayDiff -= dateDue.getDayOfYear();
+
+			if (yearDiff > 0)
+				diff += yearDiff * 365;
+
+			fees += (diff + dayDiff) * 5;
+		}
+
+		return fees;
+	}
+
+	/**
+	 * Sets the fees in the Patron object and in the database
+	 * 
+	 * @param patron
+	 * @param fees
+	 * 
+	 */
+	private void setFee(Patron patron, int fees) {
+		fees += patron.getFees();
+
+		try {
+			PreparedStatement stmt = conn
+					.prepareStatement("UPDATE patron SET fees=? WHERE patron_id=?;");
+			stmt.setInt(1, fees);
+			stmt.setInt(2, patron.getId());
+
+			stmt.execute();
+
+			// close connection
+			if (stmt != null) {
+				stmt.close();
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error setting fees");
+		}
 	}
 
 }
