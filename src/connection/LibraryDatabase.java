@@ -264,129 +264,75 @@ public class LibraryDatabase {
 	 * enter the book title, isbn, author(s) first and last names, genre,
 	 * publication date.
 	 */
+	@SuppressWarnings("deprecation")
 	public void newBook() {
+		boolean addAuthors = true;
+		int counter = 0;
 		Statement stmt = null;
-		Scanner input = new Scanner(System.in);
-		String title = null, pubDate = null, isbn = null, genre = null;
-		List<String> firstNames = new ArrayList<String>();
-		List<String> lastNames = new ArrayList<String>();
-		boolean valid = false;
+		Scanner scan = new Scanner(System.in);
+		String title = null, genre = null, firstname = null, lastname = null;
+		int isbn;
+		int pubYear = 0, pubMonth = 0, pubDay = 0;
+		List<String> authors = new ArrayList<String>();
 
-		System.out.println("==Start of New Book Creation==:");
-		while (!valid) {
-			System.out.println("Enter a book title: ");
-			title = input.nextLine();
-			if (title.length() >= 255) {
-				System.out.println("Invalid>> Book title is too long");
-				continue;
+		// Start book creation
+		System.out.println("==Starting Book Creation Process==");
+
+		// Get title
+		System.out.println("Enter a book title: ");
+		title = scan.nextLine();
+		if (title.length() <= 0) {
+			throw new IllegalArgumentException("Error: Enter a title");
+		}
+
+		// Get isbn
+		System.out.println("Enter an isbn (5 digits): ");
+		isbn = scan.nextInt();
+		if (isbn < 10000 || isbn > 99999) {
+			throw new IllegalArgumentException(
+					"Error: Out of range 10000 and 99999");
+		}
+
+		// Get genre
+		System.out.println("Enter a genre: ");
+		genre = scan.nextLine();
+		if (genre.length() <= 0 || genre.matches(".*[0-9].*")) {
+			throw new IllegalArgumentException("Error: Invalid genre name");
+		}
+
+		// Get pubdate
+		System.out.println("Enter a publication year (yyyy): ");
+		pubYear = scan.nextInt();
+		if (pubYear < 1000 || pubYear > 9999) {
+			throw new IllegalArgumentException("Error: Invalid year");
+		}
+		System.out.println("Enter a publication month (mm): ");
+		if (pubMonth < 1 || pubMonth > 12) {
+			throw new IllegalArgumentException("Error: Invalid month");
+		}
+		System.out.println("Enter a publication year (dd): ");
+		if (pubDay < 1 || pubDay > 31) {
+			throw new IllegalArgumentException("Error: Invalid day");
+		}
+		Date date = new Date(pubYear, pubMonth, pubDay);
+
+		// Add authors or n to quit
+		while (addAuthors || authors.size() == 0) {
+			System.out.println("Enter the author name");
+			authors.add(scan.nextLine());
+			if (authors.get(counter).length() <= 0) {
+				throw new IllegalArgumentException("Error: Invalid name");
 			}
 
-			// Read isbn
-			System.out.println("Enter an isbn (must be only digits): ");
-			isbn = input.nextLine();
-			if (isbn.length() >= 6 || !isbn.matches("[0-9]+")) {
-				System.out
-						.println("Invalid>> isbn must be between 00001 and 99999");
-				continue;
-			}
-
-			// Read genre
-			System.out.println("Enter a genre: ");
-			genre = input.nextLine();
-			if (genre.length() >= 255 || !genre.matches(".*[0-9].*")) {
-				System.out
-						.println("Invalid>> Genre name is too long or contains nubmers");
-				continue;
-			}
-
-			// Read publication date
-			System.out
-					.println("Enter a publication date (FORMAT = yyyy-mm-dd): ");
-			pubDate = input.nextLine();
-			if (!validateDate(pubDate)) {
-				System.out.println("Invalid>> Entered date is not valid");
-				continue;
-			}
-
-			// Read first name
-			System.out.println("Enter a first name: ");
-			firstNames.add(input.nextLine());
-			if (firstNames.get(0).length() >= 255
-					|| firstNames.get(0).matches(".*[0-9].*")) {
-				System.out
-						.println("Invalid>> First name is too long or contains numbers");
-				continue;
-			}
-
-			// Read last name
-			System.out.println("Enter a last name: ");
-			lastNames.add(input.nextLine());
-			if (lastNames.get(0).length() >= 255
-					|| lastNames.get(0).matches(".*[0-9].*")) {
-				System.out
-						.println("Invalid>> Last name is too long or contains numbers");
-				continue;
-			}
-			valid = true;
-		} // end loop
-
-		try {
-			conn = getConnection();
-			stmt = conn.createStatement();
-			int id = 0;
-			ResultSet set;
-
-			// Check for repeating Genre
-			set = stmt
-					.executeQuery("SELECT genre_id FROM genre WHERE genre_name = '"
-							+ genre + "';");
-			if (!set.next()) {
-				// If it does not already exist add the new genre
-				stmt.executeQuery("INSERT INTO genre (genre_name) VALUES ('"
-						+ genre + "');");
-				System.out.println("New Genre Added");
-				set = stmt
-						.executeQuery("SELECT genre_id FROM genre WHERE genre_name = '"
-								+ genre + "';");
-			}
-			id = set.getInt("genre_id");
-
-			// Check for repeating Book
-			set = stmt.executeQuery("SELECT isbn FROM book WHERE isbn = "
-					+ isbn);
-			if (!set.next()) {
-				// Book does not exist, therefore add the book
-				stmt.executeQuery("INSERT INTO book VALUES (" + isbn + ",'"
-						+ title + "','" + pubDate + "'," + id + ");");
-				// Check if the author exists
-				for (int i = 0; i < firstNames.size(); i++) {
-					set = stmt.executeQuery("SELECT author_id FROM author "
-							+ "WHERE firstname = '" + firstNames.get(i)
-							+ "' AND lastname = '" + lastNames.get(i) + "';");
-					if (!set.next()) {
-						stmt.executeQuery("INSERT INTO author (firstname, lastname) VALUES ('"
-								+ firstNames.get(i)
-								+ "','"
-								+ lastNames.get(i)
-								+ "');");
-						System.out.println("New Author Added");
-					}
-				}
-			} else
-				System.out.println("Book already exists in database");
-
-		} catch (SQLException ex) {
-			System.out.println("Connection failure: " + ex.getMessage());
-		} finally {
-			if (stmt != null) {
-				try {
-					stmt.close();
-				} catch (SQLException ex) {
-					System.out.println("Statement Close Failure: "
-							+ ex.getMessage());
-				}
+			System.out.println("Would you like to add more? (y/n)");
+			if (!scan.nextLine().equals("y")) {
+				addAuthors = false;
 			}
 		}
+
+		// Make book object from info
+		newBook(new Book(isbn, title, date, genre, authors));
+
 	}
 
 	/**
@@ -397,7 +343,86 @@ public class LibraryDatabase {
 	 *            Book to add to library
 	 */
 	public void newBook(Book b) {
+		Statement stmt = null;
+		// Open connection
+		try {
+			conn = getConnection();
+			stmt = conn.createStatement();
+			int id = 0;
+			ResultSet rs;
 
+			// Check if it exists
+			rs = stmt
+					.executeQuery("SELECT genre_id FROM genre WHERE genre_name = '"
+							+ b.getGenre() + "';");
+			if (!rs.next()) {
+				stmt.execute("INSERT INTO genre (genre_name) VALUES ('" + b.getGenre()
+						+ "');");
+				rs = stmt
+						.executeQuery("SELECT genre_id FROM genre WHERE genre_name = '"
+								+ b.getGenre() + "';");
+				rs.next();
+			}
+			id = rs.getInt("genre_id");
+
+			// Check if the author exists
+			for (int i = 0; i < b.getAuthors().size(); i++) {
+				rs = stmt
+						.executeQuery("SELECT CONCAT(firstname,' ',lastname) AS name FROM author "
+								+ "WHERE name = '" + b.getAuthors().get(i) + "';");
+				if (!rs.next()) {
+					stmt.execute("INSERT INTO author (firstname, lastname) VALUES ('"
+							+ b.getAuthors().get(i).substring(0,
+									b.getAuthors().get(i).indexOf(" "))
+							+ "','"
+							+ b.getAuthors().get(i).substring(
+									b.getAuthors().get(i).indexOf(" ") + 1) + "');");
+				}
+			}
+
+			// Check for repeating Book
+			rs = stmt
+					.executeQuery("SELECT isbn FROM book WHERE isbn = " + b.getIsbn());
+			if (!rs.next()) {
+				stmt.execute("INSERT INTO book VALUES (" + b.getIsbn() + ",'" + b.getBookTitle()
+						+ "','" + b.getPubDate() + "'," + id + ");");
+			} else
+				System.out.println("Book already exists");
+
+			// Bridge
+			for (int i = 0; i < b.getAuthors().size(); i++) {
+				rs = stmt
+						.executeQuery("SELECT author_id FROM author WHERE firstname = '"
+								+ b.getAuthors().get(i).substring(0,
+										b.getAuthors().get(i).indexOf(" "))
+								+ "' AND lastname = '"
+								+ b.getAuthors().get(i).substring(
+										b.getAuthors().get(i).indexOf(" ") + 1) + "';");
+				rs.next();
+				id = rs.getInt("author_id");
+				rs = stmt
+						.executeQuery("SELECT * from book_authors WHERE book = "
+								+ b.getIsbn() + " AND author = " + id + ";");
+				if (!rs.next()) {
+					stmt.execute("INSERT INTO book_authors VALUES (" + id + ","
+							+ b.getIsbn() + ")");
+				}
+			}
+		} catch (SQLException e) {
+			System.out.println("SQLException: " + e.getMessage());
+			System.out.println("ErrorCode: " + e.getErrorCode());
+			System.out.println("Error finding book");
+		} finally {
+			if (stmt != null) {
+				try {
+					stmt.close();
+				} catch (SQLException e) {
+					System.out.println("SQLException: " + e.getMessage());
+					System.out.println("ErrorCode: " + e.getErrorCode());
+					System.out.println("Error closing connection");
+				}
+			}
+		}
 	}
 
 	/**
@@ -452,7 +477,7 @@ public class LibraryDatabase {
 		} catch (SQLException e) {
 			System.out.println("SQLException: " + e.getMessage());
 			System.out.println("ErrorCode: " + e.getErrorCode());
-			System.out.println("Error executing statement");
+			System.out.println("Error executing stmt");
 		}
 
 	}
@@ -615,26 +640,6 @@ public class LibraryDatabase {
 
 		return recommended;
 
-	}
-
-	/**
-	 * Checks if the date is valid
-	 * 
-	 * @param String
-	 *            date
-	 * @return true if date is valid false if date is not
-	 */
-	public boolean validateDate(String text) {
-		if (text == null || !text.matches("\\d{4}-[01]\\d-[0-3]\\d"))
-			return false;
-		SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-		df.setLenient(false);
-		try {
-			df.parse(text);
-			return true;
-		} catch (ParseException ex) {
-			return false;
-		}
 	}
 
 	/**

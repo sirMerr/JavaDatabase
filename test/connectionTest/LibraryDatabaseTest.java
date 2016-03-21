@@ -23,7 +23,6 @@ public class LibraryDatabaseTest {
 			System.out.println(database.getBook(12348).toString());
 			//database.bookReport();
 			//database.newPatron();
-			//database.renewBooks(p);
 
 		} catch (SQLException e) {
 			e.printStackTrace();
