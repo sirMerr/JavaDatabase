@@ -4,12 +4,9 @@ import entities.Book;
 import entities.Patron;
 
 import java.sql.*;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
 
 public class LibraryDatabase {
@@ -267,9 +264,8 @@ public class LibraryDatabase {
 	public void newBook() {
 		boolean addAuthors = true;
 		int counter = 0;
-		Statement stmt = null;
 		Scanner scan = new Scanner(System.in);
-		String title = null, genre = null, firstname = null, lastname = null;
+		String title = null, genre = null;
 		int isbn;
 		int pubYear = 0, pubMonth = 0, pubDay = 0;
 		List<String> authors = new ArrayList<String>();
