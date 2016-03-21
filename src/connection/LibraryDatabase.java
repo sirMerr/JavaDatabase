@@ -219,7 +219,6 @@ public class LibraryDatabase {
 				+ lastname + "\";";
 		try {
 			ResultSet rs = stmt.executeQuery(query);
-
 			if (rs.next()) {
 				System.out.println("Patron already exists");
 

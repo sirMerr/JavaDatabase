@@ -1,0 +1,26 @@
+Tiffany Le-Nguyen // 1434872
+Questions:
+
+1. How should you handle printing books with multiple authors?
+
+The same way we normally would (while (rs.next())), since only
+the authors change, and so we can retrieve data that way.
+
+2. How should we handle incorrect input? How do we protect the integrity of our data against SQLErrors,
+  connection problems, or race conditions?
+
+We can ensure that the input does not already exist in our
+database. We can also make sure to try/catch any possible
+SQL exception and close the connection.
+
+3. How should we handle incorrect input?
+  What should happen if a book has an author or genre that isn’t already in the database?
+  What should happen if the author or genre is already present?
+  What should happen if a book has multiple authors?
+  How do we protect the integrity of our data against SQLErrors, connection problems, or race conditions?
+
+We can ensure that the input does not already exist in our
+database. If the author or genre is already present, the method
+should not create anything. If it has multiple authors, we will add it to a
+premade list. We can also make sure to try/catch any possible
+SQL exception and close the connection.
