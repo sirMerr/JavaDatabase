@@ -9,60 +9,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-public class LibraryDatabase {
+public class LibraryDatabase extends LibrarySecurity{
 
 	// global variables
-	private String userName = "CS1434872";
-	private String password = "nickleck";
-	private String serverName = "waldo2.dawsoncollege.qc.ca";
-	private int portNumber = 3306;
 	private Connection conn;
 
 	/**
 	 * Default Constructor
 	 */
 	public LibraryDatabase() throws SQLException {
-		conn = getConnection();
-	}
-
-	/**
-	 * Constructor with initiated with values
-	 * 
-	 * @param username
-	 * @param password
-	 * @param serverName
-	 * @param portNumber
-	 */
-	public LibraryDatabase(String userName, String password, String serverName,
-			int portNumber) {
-		this.userName = userName;
-		this.password = password;
-		this.serverName = serverName;
-		this.portNumber = portNumber;
-
-		conn = getConnection();
-	}
-
-	/**
-	 * Helper method that acquires a connection to the server.
-	 */
-	public Connection getConnection() {
-
-		Connection conn = null;
-		String user = this.userName;
-		String password = this.password;
-
-		try {
-			conn = DriverManager.getConnection("jdbc:mysql://"
-					+ this.serverName + ":" + this.portNumber + "/" + user,
-					user, password);
-		} catch (SQLException e) {
-			System.out.println("SQLException: " + e.getMessage());
-			System.out.println("ErrorCode: " + e.getErrorCode());
-			System.out.println("Error connecting to database");
-		}
-
-		return conn;
+		LibrarySecurity connection = new LibrarySecurity();
+		conn = connection.getConnection();
 	}
 
 	/**
@@ -495,7 +452,6 @@ public class LibraryDatabase {
 							+ "WHERE book=? AND returned=0;");
 			stmt.setInt(1, b.getIsbn());
 			stmt.execute();
-			System.out.println("Successfully returned book");
 			// close connection
 			if (stmt != null) {
 				stmt.close();
@@ -614,7 +570,6 @@ public class LibraryDatabase {
 							+ "INNER JOIN patron ON patron.patron_id=book_loan.patron_id "
 							+ "WHERE patron.patron_id ="
 							+ p.getId()
-							+ "GROUP BY genre "
 							+ "ORDER BY COUNT(genre) DESC) "
 							+ "HAVING returned IN (1) OR returned IS NULL;");
 
