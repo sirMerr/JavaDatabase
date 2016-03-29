@@ -87,10 +87,11 @@ public class LibrarySecurity {
 	 */
 	public void newUser(String username, String password) throws SQLException {
 
-		if(checkUserInfo(username, password)) {
+		if (checkUserInfo(username, password)) {
 			System.out.println("Error: Username or Password is empty");
 			return;
-		} if (login(username, password)) {
+		}
+		if (login(username, password)) {
 			System.out.println("Error: User exists");
 			return;
 		}
@@ -125,8 +126,8 @@ public class LibrarySecurity {
 		System.out.print("Password:  ");
 		String password = scan.nextLine();
 		scan.close();
-		
-		newUser(userName,password);
+
+		newUser(userName, password);
 
 	}
 
@@ -142,32 +143,66 @@ public class LibrarySecurity {
 	 * @return True if user is valid False if user is invalid
 	 */
 	public boolean login(String username, String password) throws SQLException {
-		if (checkUserInfo(username,password)) {
+		if (checkUserInfo(username, password)) {
 			System.out.println("Error: Username or Password is empty");
 			return false;
 		}
 		Connection conn = getConnection();
-		PreparedStatement stmt = conn.prepareStatement("SELECT * FROM users WHERE userid=?;");
+		PreparedStatement stmt = conn
+				.prepareStatement("SELECT * FROM users WHERE userid=?;");
 		stmt.setString(1, username);
 		ResultSet rs = stmt.executeQuery();
+
+		// Close connection
+		if (stmt != null) {
+			stmt.close();
+		}
+
+		// Get salt
+		String salt;
+		rs.next();
+		salt = rs.getString(2);
+
+		// Get hash
+		byte[] userHash = rs.getBytes(3);
+		byte[] definedHash = hash(password, salt);
+
+		// Check is hashes are the same
+		for (int i = 0; i < userHash.length; i++) {
+			if (!(userHash[i] == definedHash[i])) {
+				System.out.println("Error: Invalid Credentials");
+				return false;
+			}
+		}
+		System.out.println("Logged in");
+		return true;
 
 	}
 
 	/**
-	 * interactive form that asks for a username and password, then passes those
+	 * Interactive form that asks for a username and password, then passes those
 	 * as input the {@code login(String username, String password) method},
 	 * returning true if a user is valid or false otherwise.
 	 * 
 	 * @return
 	 */
 	public boolean login() throws SQLException {
-		return false;
+		Scanner scan = new Scanner(System.in);
+
+		// Get user info
+		System.out
+				.print("==Starting process for log in==\nUserName:  ");
+		String userName = scan.nextLine();
+		System.out.print("Password:  ");
+		String password = scan.nextLine();
+		scan.close();
+		return login(userName, password);
 
 	}
-	
+
 	public boolean checkUserInfo(String username, String password) {
 		if (username == null || username.trim().equals("") || password == null
-				|| password.trim().equals("")) 
+				|| password.trim().equals(""))
 			return false;
 		return true;
 	}

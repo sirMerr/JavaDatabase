@@ -1,0 +1,14 @@
+Tiffany Le-Nguyen
+
+[1. What would happen the performance of the login method if we
+had many more users, say 1 million, and why?]
+
+  If the login method's search algorithm is not fast enough, it
+  will take a longer time querying the database to check that the
+  proper credentials match
+
+[2. What can we do to ensure logging in will be fast even with a
+large number of users?]
+
+  We would need a better search algorithm and/or a look up table. In addition,
+  the validation should be performed locally on client computers.
