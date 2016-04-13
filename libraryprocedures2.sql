@@ -9,25 +9,40 @@ DELIMITER //
 
 CREATE PROCEDURE TopReaders()
 BEGIN
-  DECLARE l_department_count INT;
-  DECLARE l_department_id INT;
-  DECLARE l_department_name VARCHAR(255);
-  DECLARE no_more_departments INT;
+  DECLARE genre_id INT;
+  DECLARE patron_id INT;
+  DECLARE temp INT;
+  DECLARE biggest INT;
+  DECLARE biggest_patron INT;
+  DECLARE patron_count INT;
+  DECLARE genre_count INT;
 
-  DECLARE dept_csr CURSOR FOR SELECT * FROM departments;
-  DECLARE CONTINUE HANDLER FOR NOT FOUND SET no_more_departments=1;
-  SET l_department_count=0;
-  SET no_more_departments=0;
-  OPEN dept_csr;
-  dept_loop1:LOOP
-    FETCH dept_csr INTO l_department_id,l_department_name;
-    IF no_more_departments=1 THEN
-      LEAVE dept_loop1;
+  SELECT COUNT(patron_id) INTO patron_count FROM patron;
+  SELECT COUNT(genre_id) INTO genre_count FROM genre;
+  loop1:LOOP
+    SET genre_id = 1;
+    SET patron = 1;
+    SET biggest = 0;
+    SET biggest_patron = 1;
+
+    loop2: LOOP
+      SELECT COUNT(book) INTO temp FROM book_loan INNER JOIN book ON isbn = book
+      WHERE genre=genre_id AND patron_id = patron;
+      IF (biggest < temp)
+        SET biggest = temp;
+        SET biggest_patron = patron;
+        END IF;
+      IF patron = patron_count THEN
+        SELECT CONCAT("The patron that loves genre ", genre_id, " is patron ", biggest_patron);
+        LEAVE loop2;
       END IF;
-      SET l_department_count=l_department_count+1;
+      SET patron += 1;
       END LOOP;
-      CLOSE dept_csr;
-      SELECT CONCAT("The number of departments is: ", l_department_count);
+    IF genre_id = genre_count THEN
+      LEAVE loop1;
+    END IF;
+    SET genre_id += 1;
+    END LOOP;
 END //
 DELIMITER ;
 /**
@@ -41,3 +56,4 @@ DELIMITER ;
 * by patron_id and identify the patron_pal_id by finding the patron who
 * has the largest number of these books in their own list.
 */
+DELIMITER //
